@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>14-Day Statistics & Probability Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as an interactive "learning journey" to make the 14-day plan more engaging. The structure consists of a main content area with a vertical timeline/stepper representing the 14 days, and a detail pane on the right. This was chosen over a simple list to provide a sense of progression. Clicking a day on the timeline dynamically updates the detail pane with that day's specific topics. This separation keeps the main interface clean and focused. A doughnut chart is included to give a high-level visual summary of the curriculum's main sections, allowing users to understand the course structure at a glance before diving into daily specifics. This user flow (overview -> explore timeline -> view details) is intuitive for a structured learning plan. -->
+    <!-- Visualization & Content Choices: 1. Report Info: The 14-day chronological plan. Goal: Guide the user. Viz/Presentation: Interactive vertical timeline built with HTML/Tailwind. Interaction: Click a day to update the detail view. Justification: More engaging than a static list, visually represents progress. Library/Method: Vanilla JS. 2. Report Info: The high-level parts of the curriculum (Descriptive, Probability, etc.). Goal: Inform about course structure. Viz/Presentation: Doughnut Chart. Interaction: Hover to see details. Justification: Provides a quick, digestible overview of the plan's focus areas. Library/Method: Chart.js (Canvas). 3. Report Info: Daily topics list. Goal: Provide detailed learning objectives. Viz/Presentation: Dynamically updated text block with lists. Interaction: Content appears on day selection. Justification: Prevents information overload by showing details on demand. Library/Method: Vanilla JS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 1.25rem;
+            top: 2.5rem;
+            bottom: -2.5rem;
+            width: 2px;
+            background-color: #E5E7EB;
+            transform: translateX(-50%);
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .timeline-dot {
+            transition: all 0.3s ease;
+        }
+        .timeline-item.active .timeline-dot {
+            background-color: #A57F60;
+            transform: scale(1.25);
+            box-shadow: 0 0 0 4px rgba(165, 127, 96, 0.2);
+        }
+        .timeline-item.active .day-title {
+            color: #A57F60;
+            font-weight: 600;
+        }
+        .timeline-item.day-complete .timeline-dot {
+            background-color: #22c55e; /* green-500 */
+            border-color: #f0fdf4; /* green-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .gemini-btn {
+            background-color: #A57F60;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .gemini-btn:hover {
+            background-color: #8e6a4d;
+        }
+        .gemini-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #A57F60;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #practice-problems-container h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+         #practice-problems-container h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #3A322F;
+        }
+        #practice-problems-container p {
+            margin-bottom: 0.75rem;
+        }
+        #practice-problems-container code {
+            background-color: #f0e9e4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        #practice-problems-container ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            margin-bottom: 1rem;
+        }
+        /* Styles for completed items */
+        li.completed label {
+            text-decoration: line-through;
+            color: #9ca3af; /* gray-400 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 py-8 md:py-12">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-[#3A322F] tracking-tight">14-Day Statistics & Probability Plan</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">An interactive guide to building a robust academic foundation, from descriptive statistics to inferential analysis.</p>
+            <div class="inline-block bg-[#A57F60]/10 border border-[#A57F60]/20 rounded-full px-6 py-2 mt-6 shadow-sm">
+                <p class="text-md font-semibold text-[#8e6a4d]">
+                    <span class="font-light">Instructor:</span> Mr. Abdalrhman Mohamed
+                </p>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+
+            <div class="lg:col-span-1">
+                 <div class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6 sticky top-8">
+                    <h3 class="text-xl font-bold text-center text-[#3A322F] mb-4">Course Structure</h3>
+                    <div class="chart-container">
+                        <canvas id="topicDistributionChart"></canvas>
+                    </div>
+                     <p class="text-center text-sm text-gray-500 mt-4">This chart shows the distribution of topics across the 14-day curriculum. Hover over a section to see the number of days dedicated to each core area.</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="md:col-span-1">
+                    <h2 class="text-2xl font-bold text-[#3A322F] mb-6">Learning Journey</h2>
+                    <div id="timeline-container" class="space-y-10">
+                    </div>
+                </div>
+
+                <div class="md:col-span-1">
+                    <div class="sticky top-8">
+                        <h2 class="text-2xl font-bold text-[#3A322F] mb-6">Daily Focus</h2>
+                        <div id="details-pane" class="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg p-6 min-h-[400px] transition-all duration-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center mt-16 text-gray-500 text-sm">
+            <p>An interactive learning tool. Click on any day to explore the topics.</p>
+        </footer>
+    </div>
+
+    <script>
+        const planData = [
+            { day: 1, part: "Descriptive", title: "Foundations of Statistics & Data", topics: ["Descriptive vs. Inferential Statistics", "Population vs. Sample", "Parameters vs. Statistics", "Qualitative vs. Quantitative Data", "Scales of Measurement (Nominal, Ordinal, Interval, Ratio)"] },
+            { day: 2, part: "Descriptive", title: "Central Tendency & Dispersion", topics: ["Mean, Median, Mode", "Range, Variance, Standard Deviation", "Quartiles & Interquartile Range (IQR)", "The Five-Number Summary", "Box-and-Whisker Plots"] },
+            { day: 3, part: "Descriptive", title: "Data Shape & Bivariate Analysis", topics: ["Skewness & Kurtosis", "Z-scores and The Empirical Rule", "Scatter Plots", "Covariance vs. Correlation Coefficient", "Correlation does not imply causation"] },
+            { day: 4, part: "Probability", title: "Fundamentals of Probability", topics: ["Experiment, Sample Space, Events", "Probability Axioms", "Addition & Multiplication Rules", "The Complement Rule", "Combinatorics (Permutations, Combinations)"] },
+            { day: 5, part: "Probability", title: "Conditional Probability & Random Variables", topics: ["Conditional Probability", "The Law of Total Probability", "Bayes’ Theorem", "Discrete vs. Continuous Random Variables", "PMF, PDF, and CDF"] },
+            { day: 6, part: "Probability", title: "Properties of Random Variables", topics: ["Expected Value (Mean)", "Variance and Standard Deviation", "Joint and Marginal Distributions", "Covariance and Correlation", "Linear Combinations of Random Variables"] },
+            { day: 7, part: "Probability", title: "Common Discrete Distributions", topics: ["Bernoulli and Binomial", "Poisson Distribution", "Poisson Approximation to Binomial", "Geometric and Negative Binomial", "Hypergeometric Distribution"] },
+            { day: 8, part: "Probability", title: "Common Continuous Distributions", topics: ["Uniform Distribution", "Exponential Distribution", "The Normal Distribution", "The Standard Normal Distribution (Z)", "Calculating Area under the curve"] },
+            { day: 9, part: "Inference", title: "Sampling & The Central Limit Theorem", topics: ["Sampling Methods (Simple, Stratified, Cluster, Systematic)", "The Concept of a Sampling Distribution", "The Central Limit Theorem (CLT)", "Importance and Implications of CLT"] },
+            { day: 10, part: "Inference", title: "Estimation & Confidence Intervals", topics: ["Point Estimation Properties (Unbiased, Efficient, Consistent)", "Interval Estimation", "Confidence Intervals for Mean (σ known/unknown)", "Confidence Intervals for Proportion", "Determining Sample Size"] },
+            { day: 11, part: "Inference", "title": "The Logic of Hypothesis Testing", topics: ["Null ($H_0$) & Alternative ($H_a$) Hypotheses", "One-tailed vs. Two-tailed Tests", "Type I and Type II Errors", "Significance Level (α) and Power (1-β)", "p-value and Critical Value Approaches"] },
+            { day: 12, part: "Inference", title: "Hypothesis Testing in Practice", topics: ["Z-test & t-test for a single Population Mean", "Test for a Population Proportion", "Comparing two Population Means (Independent & Paired)", "Comparing two Population Proportions", "Understanding t, χ², and F distributions"] },
+            { day: 13, part: "Advanced", title: "Chi-Square Tests & ANOVA", topics: ["Chi-Square (χ²) Goodness-of-Fit Test", "Chi-Square (χ²) Test for Independence", "One-Way Analysis of Variance (ANOVA)", "Understanding the F-statistic", "Post-hoc testing (e.g., Tukey's HSD)"] },
+            { day: 14, part: "Advanced", title: "Intro to Linear Regression & Review", topics: ["Simple Linear Regression Model", "Method of Least Squares", "Interpreting Slope and Intercept", "Hypothesis Test for the Slope", "Comprehensive Review of all concepts"] }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const timelineContainer = document.getElementById('timeline-container');
+            const detailsPane = document.getElementById('details-pane');
+            let currentDayData = null;
+            let completionStatus = new Set();
+
+            function loadProgress() {
+                const savedData = localStorage.getItem('planCompletionStatus');
+                if (savedData) {
+                    completionStatus = new Set(JSON.parse(savedData));
+                }
+            }
+
+            function saveProgress() {
+                localStorage.setItem('planCompletionStatus', JSON.stringify(Array.from(completionStatus)));
+            }
+            
+            function updateTimelineProgress() {
+                planData.forEach(dayData => {
+                    const allTopicsForDay = dayData.topics.map((_, index) => `day-${dayData.day}-topic-${index}`);
+                    const isDayComplete = allTopicsForDay.every(topicId => completionStatus.has(topicId));
+                    const timelineItem = document.querySelector(`.timeline-item[data-day="${dayData.day}"]`);
+
+                    if (timelineItem) {
+                        if (isDayComplete) {
+                            timelineItem.classList.add('day-complete');
+                        } else {
+                            timelineItem.classList.remove('day-complete');
+                        }
+                    }
+                });
+            }
+
+
+            async function generatePracticeProblems() {
+                const button = document.getElementById('gemini-generate-btn');
+                const container = document.getElementById('practice-problems-container');
+                if (!currentDayData || !button || !container) return;
+                
+                button.disabled = true;
+                container.innerHTML = '<div class="loader"></div>';
+
+                const userQuery = `Create 2 practice problems for a beginner student learning about the following topics in statistics and probability: ${currentDayData.topics.join(', ')}. Provide a brief problem statement and then a clear, step-by-step solution for each. Format the response in simple Markdown, using ### for problem titles and #### for solution titles.`;
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                };
+
+                try {
+                    // Exponential backoff implementation
+                    let response;
+                    let delay = 1000;
+                    for (let i = 0; i < 5; i++) {
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (response.ok) break;
+                        if (response.status === 429 || response.status >= 500) {
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            delay *= 2;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(`API request failed with status ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                        container.innerHTML = formatMarkdown(text);
+                    } else {
+                        throw new Error("No content received from API.");
+                    }
+                } catch (error) {
+                    console.error("Gemini API Error:", error);
+                    container.innerHTML = `<p class="text-red-500 text-center">Sorry, couldn't generate practice problems at this time. Please try again later.</p>`;
+                } finally {
+                    button.disabled = false;
+                }
+            }
+
+            function formatMarkdown(text) {
+                return text
+                    .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+                    .replace(/#### (.*?)\n/g, '<h4>$1</h4>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    .replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>')
+                    .replace(/<\/ul>\n<ul>/g, '')
+                    .replace(/\n/g, '<br>');
+            }
+
+            function updateDetails(dayNumber) {
+                currentDayData = planData.find(d => d.day === dayNumber);
+                if (!currentDayData) return;
+
+                let topicsHtml = currentDayData.topics.map((topic, index) => {
+                    const topicId = `day-${currentDayData.day}-topic-${index}`;
+                    const isCompleted = completionStatus.has(topicId);
+                    return `
+                        <li class="flex items-center transition-colors duration-200 ${isCompleted ? 'completed' : ''}">
+                            <input type="checkbox" id="${topicId}" data-topic-id="${topicId}" class="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#A57F60] focus:ring-[#A57F60] mr-3 cursor-pointer" ${isCompleted ? 'checked' : ''}>
+                            <label for="${topicId}" class="flex-1 cursor-pointer">${topic}</label>
+                        </li>`;
+                }).join('');
+
+                detailsPane.innerHTML = `
+                    <p class="text-sm font-semibold text-gray-500">Day ${currentDayData.day}</p>
+                    <h3 class="text-xl font-bold text-[#3A322F] mt-1 mb-4">${currentDayData.title}</h3>
+                    <p class="text-sm text-gray-600 mb-4">Check off topics as you complete them. Your progress is saved automatically.</p>
+                    <ul class="space-y-3 text-gray-700">
+                        ${topicsHtml}
+                    </ul>
+                    <div class="mt-6">
+                        <button id="gemini-generate-btn" class="gemini-btn w-full font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2">
+                            ✨ Generate Practice Problems
+                        </button>
+                    </div>
+                    <div id="practice-problems-container" class="mt-4 text-gray-800"></div>
+                `;
+
+                document.getElementById('gemini-generate-btn').addEventListener('click', generatePracticeProblems);
+
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (parseInt(item.dataset.day) === dayNumber) {
+                        item.classList.add('active');
+                    }
+                });
+            }
+
+            // Initial setup
+            loadProgress();
+
+            planData.forEach(day => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item relative pl-12 cursor-pointer';
+                item.dataset.day = day.day;
+                item.innerHTML = `
+                    <div class="timeline-dot absolute left-5 top-1 h-5 w-5 rounded-full bg-gray-300 border-4 border-white"></div>
+                    <p class="text-sm text-gray-500">Day ${day.day}</p>
+                    <h4 class="day-title font-medium text-lg text-gray-800 transition-colors">${day.title}</h4>
+                `;
+                timelineContainer.appendChild(item);
+            });
+            
+            timelineContainer.addEventListener('click', (e) => {
+                const item = e.target.closest('.timeline-item');
+                if (item) {
+                    const day = parseInt(item.dataset.day);
+                    updateDetails(day);
+                }
+            });
+
+            detailsPane.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox' && e.target.dataset.topicId) {
+                    const topicId = e.target.dataset.topicId;
+                    const listItem = e.target.closest('li');
+                    if (e.target.checked) {
+                        completionStatus.add(topicId);
+                        listItem.classList.add('completed');
+                    } else {
+                        completionStatus.delete(topicId);
+                        listItem.classList.remove('completed');
+                    }
+                    saveProgress();
+                    updateTimelineProgress();
+                }
+            });
+
+            function createDistributionChart() {
+                const ctx = document.getElementById('topicDistributionChart').getContext('2d');
+                const partCounts = planData.reduce((acc, curr) => {
+                    acc[curr.part] = (acc[curr.part] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(partCounts);
+                const data = Object.values(partCounts);
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '# of Days',
+                            data: data,
+                            backgroundColor: [
+                                'rgba(217, 184, 159, 0.7)', // Descriptive
+                                'rgba(165, 127, 96, 0.7)', // Probability
+                                'rgba(125, 99, 80, 0.7)',  // Inference
+                                'rgba(92, 73, 59, 0.7)'     // Advanced
+                            ],
+                            borderColor: [
+                                'rgba(217, 184, 159, 1)',
+                                'rgba(165, 127, 96, 1)',
+                                'rgba(125, 99, 80, 1)',
+                                'rgba(92, 73, 59, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: {
+                                        family: 'Inter, sans-serif'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' days';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateDetails(1);
+            updateTimelineProgress();
+            createDistributionChart();
+        });
+    </script>
+</body>
+</html>
+
+
